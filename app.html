@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NeonSpiro Studio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        :root {
+            --glass-bg: rgba(15, 23, 42, 0.75);
+            --glass-border: rgba(56, 189, 248, 0.2);
+            --accent: #38bdf8;
+        }
+
+        body {
+            background-color: #020617; /* Slate 950 */
+            color: #e2e8f0;
+            overflow: hidden;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            touch-action: none; /* Prevent Pull-to-refresh on mobile */
+        }
+
+        /* --- Custom UI Components --- */
+
+        /* Glass Panel */
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-right: 1px solid var(--glass-border);
+            box-shadow: 10px 0 30px rgba(0,0,0,0.3);
+        }
+
+        /* Custom Range Slider */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]:focus { outline: none; }
+        
+        /* Thumb */
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 14px;
+            width: 14px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            margin-top: -5px; /* adjust for track height */
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+            transition: transform 0.1s;
+        }
+        input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+        
+        /* Track */
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #334155;
+            border-radius: 2px;
+        }
+
+        /* Segmented Control / Radio Buttons */
+        .segmented-control input:checked + label {
+            background-color: #0ea5e9; /* Sky 500 */
+            color: white;
+            text-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+
+        /* Transitions */
+        .slide-panel {
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Color Picker Reset */
+        input[type="color"] {
+            -webkit-appearance: none;
+            border: none;
+        }
+        input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+        input[type="color"]::-webkit-color-swatch {
+            border: none;
+            border-radius: 6px;
+        }
+
+        /* Scrollbar */
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #475569; border-radius: 2px; }
+    </style>
+</head>
+<body class="h-screen w-screen relative selection:bg-sky-500 selection:text-white">
+
+    <!-- 1. Background Grid (Visual Aid) -->
+    <div class="absolute inset-0 z-0 pointer-events-none opacity-20" 
+         style="background-image: radial-gradient(#38bdf8 1px, transparent 1px); background-size: 40px 40px; mask-image: radial-gradient(circle at center, black 40%, transparent 100%);">
+    </div>
+
+    <!-- 2. Main Canvas -->
+    <canvas id="spiroCanvas" class="absolute inset-0 z-10 cursor-crosshair active:cursor-grabbing"></canvas>
+
+    <!-- 3. Sidebar Control Panel -->
+    <div id="sidebar" class="absolute top-0 left-0 h-full w-80 max-w-[90vw] z-30 slide-panel transform translate-x-0 glass-panel flex flex-col">
+        
+        <!-- Header -->
+        <div class="p-5 border-b border-slate-700/50 flex justify-between items-center bg-slate-900/40">
+            <div class="flex items-center gap-2 text-sky-400">
+                <i class="ph-fill ph-aperture text-2xl animate-spin-slow"></i>
+                <span class="font-bold tracking-wide text-lg">NeonSpiro</span>
+            </div>
+            <button id="btn-collapse" class="text-slate-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-slate-800">
+                <i class="ph-bold ph-caret-double-left text-xl"></i>
+            </button>
+        </div>
+
+        <!-- Scrollable Controls -->
+        <div class="flex-1 overflow-y-auto custom-scroll p-5 space-y-6">
+            
+            <!-- Main Actions -->
+            <div class="grid grid-cols-2 gap-3">
+                <button id="btn-draw" class="col-span-1 bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white font-bold py-3 px-4 rounded-xl shadow-lg shadow-sky-900/20 transition-all active:scale-95 flex items-center justify-center gap-2">
+                    <i class="ph-fill ph-play"></i> DRAW
+                </button>
+                <button id="btn-stop" class="hidden col-span-1 bg-rose-600 hover:bg-rose-500 text-white font-bold py-3 px-4 rounded-xl shadow-lg shadow-rose-900/20 transition-all active:scale-95 flex items-center justify-center gap-2">
+                    <i class="ph-fill ph-stop"></i> STOP
+                </button>
+                <button id="btn-random" class="col-span-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-amber-400 font-bold py-3 px-4 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2">
+                    <i class="ph-fill ph-dice-five text-xl"></i>
+                </button>
+            </div>
+
+            <!-- Physics Section -->
+            <div class="space-y-4">
+                <div class="flex items-center gap-2 text-slate-300 text-xs font-bold uppercase tracking-wider">
+                    <i class="ph-fill ph-gear text-sky-500"></i> Gear Physics
+                </div>
+                
+                <div class="bg-slate-800/40 rounded-xl p-4 border border-slate-700/50 space-y-4">
+                    <!-- Outer Ring -->
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-slate-400">Outer Ring (R)</span>
+                            <span id="val-R" class="text-sky-300 font-mono">150</span>
+                        </div>
+                        <input type="range" id="input-R" min="50" max="300" value="150">
+                    </div>
+
+                    <!-- Inner Gear -->
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-slate-400">Inner Gear (r)</span>
+                            <span id="val-r" class="text-sky-300 font-mono">52</span>
+                        </div>
+                        <input type="range" id="input-r" min="2" max="150" value="52">
+                    </div>
+
+                    <!-- Offset -->
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-slate-400">Pen Offset (d)</span>
+                            <span id="val-d" class="text-sky-300 font-mono">50</span>
+                        </div>
+                        <input type="range" id="input-d" min="10" max="200" value="50">
+                    </div>
+
+                    <!-- Speed -->
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-slate-400">Sim Speed</span>
+                            <span id="val-speed" class="text-emerald-400 font-mono">Normal</span>
+                        </div>
+                        <input type="range" id="input-speed" min="1" max="50" value="5">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Style Section -->
+            <div class="space-y-4">
+                <div class="flex items-center gap-2 text-slate-300 text-xs font-bold uppercase tracking-wider">
+                    <i class="ph-fill ph-paint-brush text-purple-500"></i> Ink & FX
+                </div>
+
+                <div class="bg-slate-800/40 rounded-xl p-4 border border-slate-700/50 space-y-4">
+                    <!-- Color & Width Row -->
+                    <div class="flex gap-4">
+                        <div class="flex-1">
+                            <label class="block text-xs text-slate-400 mb-1">Color</label>
+                            <div class="h-10 w-full rounded-lg overflow-hidden border border-slate-600 relative">
+                                <input type="color" id="input-color" value="#00ffff" class="absolute -top-2 -left-2 w-[150%] h-[150%] cursor-pointer">
+                            </div>
+                        </div>
+                        <div class="flex-1">
+                            <label class="block text-xs text-slate-400 mb-1">Width</label>
+                            <input type="number" id="input-width" value="2" min="1" max="20" class="w-full h-10 bg-slate-900 border border-slate-600 rounded-lg px-3 text-white text-center focus:border-sky-500 focus:outline-none transition-colors">
+                        </div>
+                    </div>
+
+                    <!-- Toggles -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="flex items-center gap-2 p-2 rounded-lg bg-slate-900/50 border border-slate-700/50 cursor-pointer hover:bg-slate-800 transition-colors">
+                            <input type="checkbox" id="check-rainbow" class="rounded bg-slate-700 border-slate-600 text-sky-500 focus:ring-0">
+                            <span class="text-xs font-medium">Rainbow</span>
+                        </label>
+                        <label class="flex items-center gap-2 p-2 rounded-lg bg-slate-900/50 border border-slate-700/50 cursor-pointer hover:bg-slate-800 transition-colors">
+                            <input type="checkbox" id="check-glow" class="rounded bg-slate-700 border-slate-600 text-sky-500 focus:ring-0" checked>
+                            <span class="text-xs font-medium">Neon Glow</span>
+                        </label>
+                    </div>
+
+                    <!-- FX Segmented Control -->
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-2">Animation Effect</label>
+                        <div class="segmented-control grid grid-cols-5 gap-1 bg-slate-900 p-1 rounded-lg">
+                            <!-- None -->
+                            <div class="relative">
+                                <input type="radio" name="fx" id="fx-none" value="none" class="peer hidden" checked>
+                                <label for="fx-none" class="block text-center py-2 rounded-md text-slate-500 hover:bg-slate-800 hover:text-slate-300 cursor-pointer transition-all" title="None">
+                                    <i class="ph-bold ph-prohibit"></i>
+                                </label>
+                            </div>
+                            <!-- Wiggle -->
+                            <div class="relative">
+                                <input type="radio" name="fx" id="fx-wiggle" value="wiggle" class="peer hidden">
+                                <label for="fx-wiggle" class="block text-center py-2 rounded-md text-slate-500 hover:bg-slate-800 hover:text-slate-300 cursor-pointer transition-all" title="Wiggle">
+                                    <i class="ph-bold ph-waves"></i>
+                                </label>
+                            </div>
+                            <!-- Pulse -->
+                            <div class="relative">
+                                <input type="radio" name="fx" id="fx-pulse" value="pulse" class="peer hidden">
+                                <label for="fx-pulse" class="block text-center py-2 rounded-md text-slate-500 hover:bg-slate-800 hover:text-slate-300 cursor-pointer transition-all" title="Pulse">
+                                    <i class="ph-bold ph-activity"></i>
+                                </label>
+                            </div>
+                            <!-- Flow -->
+                            <div class="relative">
+                                <input type="radio" name="fx" id="fx-flow" value="flow" class="peer hidden">
+                                <label for="fx-flow" class="block text-center py-2 rounded-md text-slate-500 hover:bg-slate-800 hover:text-slate-300 cursor-pointer transition-all" title="Flow">
+                                    <i class="ph-bold ph-arrows-left-right"></i>
+                                </label>
+                            </div>
+                            <!-- Bounce -->
+                            <div class="relative">
+                                <input type="radio" name="fx" id="fx-bounce" value="bounce" class="peer hidden">
+                                <label for="fx-bounce" class="block text-center py-2 rounded-md text-slate-500 hover:bg-slate-800 hover:text-slate-300 cursor-pointer transition-all" title="Bounce">
+                                    <i class="ph-bold ph-arrows-out"></i>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- FX Intensity Slider -->
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-slate-400">Effect Intensity</span>
+                            <span id="val-fx" class="text-sky-300 font-mono">5</span>
+                        </div>
+                        <input type="range" id="input-fx-intensity" min="1" max="20" value="5">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer Actions -->
+        <div class="p-4 border-t border-slate-700/50 bg-slate-900/40 grid grid-cols-3 gap-2">
+            <button id="btn-undo" class="text-xs text-slate-400 hover:text-white hover:bg-slate-700 p-2 rounded transition-colors flex flex-col items-center gap-1">
+                <i class="ph-fill ph-arrow-u-up-left text-lg"></i> Undo
+            </button>
+            <button id="btn-clear" class="text-xs text-slate-400 hover:text-rose-400 hover:bg-slate-700 p-2 rounded transition-colors flex flex-col items-center gap-1">
+                <i class="ph-fill ph-trash text-lg"></i> Clear
+            </button>
+            <button id="btn-save" class="text-xs text-slate-400 hover:text-emerald-400 hover:bg-slate-700 p-2 rounded transition-colors flex flex-col items-center gap-1">
+                <i class="ph-fill ph-download-simple text-lg"></i> Save
+            </button>
+        </div>
+    </div>
+
+    <!-- 4. Floating Action Button (Visible when menu collapsed) -->
+    <div id="fab-container" class="absolute top-4 left-4 z-20 transition-all duration-300 opacity-0 pointer-events-none transform -translate-x-4">
+        <button id="btn-expand" class="w-12 h-12 bg-slate-800/80 backdrop-blur border border-slate-700 text-sky-400 rounded-full shadow-lg flex items-center justify-center hover:bg-slate-700 hover:scale-110 transition-all active:scale-95">
+            <i class="ph-bold ph-list text-xl"></i>
+        </button>
+    </div>
+
+    <!-- 5. Toast Notification -->
+    <div id="toast" class="absolute bottom-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white px-4 py-2 rounded-full shadow-xl border border-slate-700 text-sm opacity-0 transition-opacity pointer-events-none z-50">
+        Message
+    </div>
+
+    <script>
+        /**
+         * NeonSpiro Core Logic
+         */
+        
+        // --- State ---
+        const state = {
+            paths: [],
+            currentPath: null,
+            isDrawing: false,
+            time: 0,
+            launchPos: { x: 0, y: 0 },
+            sidebarOpen: true
+        };
+
+        // --- DOM Elements ---
+        const canvas = document.getElementById('spiroCanvas');
+        const ctx = canvas.getContext('2d');
+        const sidebar = document.getElementById('sidebar');
+        const fabContainer = document.getElementById('fab-container');
+        const toastEl = document.getElementById('toast');
+
+        // Inputs
+        const ui = {
+            R: document.getElementById('input-R'),
+            r: document.getElementById('input-r'),
+            d: document.getElementById('input-d'),
+            speed: document.getElementById('input-speed'),
+            color: document.getElementById('input-color'),
+            width: document.getElementById('input-width'),
+            rainbow: document.getElementById('check-rainbow'),
+            glow: document.getElementById('check-glow'),
+            fxInt: document.getElementById('input-fx-intensity'),
+            // FX Radios handled dynamically
+            
+            // Value Displays
+            valR: document.getElementById('val-R'),
+            valr: document.getElementById('val-r'),
+            vald: document.getElementById('val-d'),
+            valSpeed: document.getElementById('val-speed'),
+            valFx: document.getElementById('val-fx'),
+            
+            // Buttons
+            btnCollapse: document.getElementById('btn-collapse'),
+            btnExpand: document.getElementById('btn-expand'),
+            btnDraw: document.getElementById('btn-draw'),
+            btnStop: document.getElementById('btn-stop'),
+            btnRandom: document.getElementById('btn-random'),
+            btnUndo: document.getElementById('btn-undo'),
+            btnClear: document.getElementById('btn-clear'),
+            btnSave: document.getElementById('btn-save'),
+        };
+
+        // --- Layout & Initialization ---
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            if (state.launchPos.x === 0 && state.launchPos.y === 0) {
+                // Center on load, slightly offset to right if sidebar is open on desktop
+                const offset = window.innerWidth > 768 && state.sidebarOpen ? 160 : 0;
+                state.launchPos.x = (canvas.width / 2) + offset;
+                state.launchPos.y = canvas.height / 2;
+            }
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // --- Interaction Logic ---
+
+        // 1. Sidebar Toggle
+        function toggleSidebar() {
+            state.sidebarOpen = !state.sidebarOpen;
+            if (state.sidebarOpen) {
+                sidebar.classList.remove('-translate-x-full');
+                fabContainer.classList.add('opacity-0', 'pointer-events-none', '-translate-x-4');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                fabContainer.classList.remove('opacity-0', 'pointer-events-none', '-translate-x-4');
+            }
+        }
+        ui.btnCollapse.addEventListener('click', toggleSidebar);
+        ui.btnExpand.addEventListener('click', toggleSidebar);
+
+        // 2. Launch Point Setting
+        function setLaunchPoint(x, y) {
+            state.launchPos.x = x;
+            state.launchPos.y = y;
+        }
+
+        canvas.addEventListener('mousedown', e => setLaunchPoint(e.clientX, e.clientY));
+        canvas.addEventListener('touchstart', e => {
+            // e.preventDefault(); // Let browser handle gestures, we just want coords
+            const t = e.touches[0];
+            setLaunchPoint(t.clientX, t.clientY);
+        }, {passive: true});
+
+        // 3. UI Updates
+        function updateDisplays() {
+            ui.valR.textContent = ui.R.value;
+            ui.valr.textContent = ui.r.value;
+            ui.vald.textContent = ui.d.value;
+            ui.valFx.textContent = ui.fxInt.value;
+
+            const s = parseInt(ui.speed.value);
+            let lbl = "Normal";
+            if(s < 10) lbl = "Slow";
+            else if(s > 35) lbl = "Hyper";
+            else if(s > 25) lbl = "Fast";
+            ui.valSpeed.textContent = lbl;
+        }
+        // Attach listeners to all range inputs
+        document.querySelectorAll('input[type=range]').forEach(el => {
+            el.addEventListener('input', updateDisplays);
+        });
+
+        // --- Math & Engine ---
+
+        function getSpiroPoint(R, r, d, theta) {
+            const diff = R - r;
+            const ratio = diff / r;
+            const x = diff * Math.cos(theta) + d * Math.cos(ratio * theta);
+            const y = diff * Math.sin(theta) - d * Math.sin(ratio * theta);
+            return { x, y };
+        }
+
+        class Path {
+            constructor(config) {
+                this.config = { ...config };
+                this.points = [];
+                this.theta = 0;
+                this.isComplete = false;
+                this.origin = { ...state.launchPos };
+                
+                // Calculate safe start
+                const R = parseInt(config.R);
+                const r = parseInt(config.r);
+                this.startPoint = getSpiroPoint(R, r, config.d, 0);
+            }
+
+            update(speed) {
+                if (this.isComplete) return;
+                
+                this.theta += 0.05 * speed; // Base step size * speed multiplier in loop
+                
+                const { R, r, d } = this.config;
+                const point = getSpiroPoint(parseInt(R), parseInt(r), parseInt(d), this.theta);
+
+                // Closure Logic
+                if (this.theta > 2 * Math.PI) {
+                    const dist = Math.hypot(point.x - this.startPoint.x, point.y - this.startPoint.y);
+                    // Threshold to snap close
+                    if (dist < 3) {
+                        this.points.push(this.startPoint);
+                        this.isComplete = true;
+                        stopDrawing();
+                        showToast("Pattern Complete!");
+                        return;
+                    }
+                }
+                
+                // Hard Safety Cap
+                if (this.theta > 150 * Math.PI) {
+                    this.isComplete = true;
+                    stopDrawing();
+                }
+
+                this.points.push(point);
+            }
+        }
+
+        // --- Actions ---
+
+        function getActiveFX() {
+            const checked = document.querySelector('input[name="fx"]:checked');
+            return checked ? checked.value : 'none';
+        }
+
+        function startDrawing() {
+            if (state.isDrawing) return;
+            
+            const config = {
+                R: ui.R.value,
+                r: ui.r.value,
+                d: ui.d.value,
+                color: ui.color.value,
+                width: ui.width.value,
+                isRainbow: ui.rainbow.checked,
+                isGlow: ui.glow.checked,
+                fx: getActiveFX(),
+                fxInt: ui.fxInt.value
+            };
+
+            state.currentPath = new Path(config);
+            state.isDrawing = true;
+
+            // Toggle UI Buttons
+            // FIXED: Do not hide parent element
+            ui.btnDraw.classList.add('hidden');
+            ui.btnStop.classList.remove('hidden');
+
+            // On mobile, collapse sidebar automatically to show art
+            if (window.innerWidth < 768) {
+                if(state.sidebarOpen) toggleSidebar();
+            }
+        }
+
+        function stopDrawing() {
+            if (state.currentPath && !state.currentPath.isComplete) {
+                state.currentPath.isComplete = true;
+                state.paths.push(state.currentPath);
+            } else if (state.currentPath) {
+                state.paths.push(state.currentPath);
+            }
+            
+            state.currentPath = null;
+            state.isDrawing = false;
+
+            ui.btnDraw.classList.remove('hidden');
+            ui.btnStop.classList.add('hidden');
+        }
+
+        // --- Render Loop ---
+
+        function animate() {
+            requestAnimationFrame(animate);
+            state.time += 0.05;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 1. Draw Launch Reticle
+            drawReticle(ctx, state.launchPos.x, state.launchPos.y, state.time);
+
+            // 2. Render Paths
+            const allPaths = [...state.paths];
+            if (state.currentPath) allPaths.push(state.currentPath);
+
+            // Update Current Path
+            if (state.isDrawing && state.currentPath && !state.currentPath.isComplete) {
+                const speedVal = parseInt(ui.speed.value);
+                // Multi-step for speed
+                const steps = Math.ceil(speedVal / 2); 
+                for(let i=0; i<steps; i++) state.currentPath.update(1);
+            }
+
+            allPaths.forEach(path => renderPath(ctx, path, state.time));
+        }
+
+        function renderPath(ctx, path, time) {
+            if (path.points.length < 2) return;
+            
+            const fx = path.config.fx;
+            const fxInt = parseInt(path.config.fxInt);
+            const ox = path.origin.x;
+            const oy = path.origin.y;
+
+            ctx.save();
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            // Global FX transforms
+            if (fx === 'bounce') {
+                const scale = 1 + Math.sin(time * (fxInt/5)) * 0.05;
+                ctx.translate(ox, oy);
+                ctx.scale(scale, scale);
+                ctx.translate(-ox, -oy);
+            }
+
+            // Line Style
+            ctx.lineWidth = path.config.width;
+            if (fx === 'pulse') {
+                 ctx.lineWidth = parseInt(path.config.width) + Math.sin(time * (fxInt/4)) * 2;
+            }
+
+            if (path.config.isGlow) {
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = path.config.isRainbow ? 'white' : path.config.color;
+            }
+
+            if (!path.config.isRainbow) ctx.strokeStyle = path.config.color;
+            
+            if (fx === 'flow' && !path.config.isRainbow) {
+                ctx.setLineDash([10, 15]);
+                ctx.lineDashOffset = -time * (fxInt * 3);
+            }
+
+            // Point Rendering
+            const getWiggle = (idx) => {
+                if (fx !== 'wiggle') return {x:0, y:0};
+                const off = Math.sin((idx * 0.1) - (time * 3)) * fxInt;
+                return { 
+                    x: Math.cos(time + idx) * off, 
+                    y: Math.sin(time + idx) * off 
+                };
+            };
+
+            ctx.beginPath();
+            
+            // Optimization: If simple line, just draw
+            if (!path.config.isRainbow) {
+                const startW = getWiggle(0);
+                ctx.moveTo(ox + path.points[0].x + startW.x, oy + path.points[0].y + startW.y);
+                for(let i=1; i<path.points.length; i++) {
+                    const w = getWiggle(i);
+                    ctx.lineTo(ox + path.points[i].x + w.x, oy + path.points[i].y + w.y);
+                }
+                ctx.stroke();
+            } else {
+                // Rainbow Segment Loop
+                for(let i=0; i<path.points.length-1; i++) {
+                     ctx.beginPath();
+                     const w1 = getWiggle(i);
+                     const w2 = getWiggle(i+1);
+                     ctx.moveTo(ox + path.points[i].x + w1.x, oy + path.points[i].y + w1.y);
+                     ctx.lineTo(ox + path.points[i+1].x + w2.x, oy + path.points[i+1].y + w2.y);
+                     
+                     // Color cycle
+                     const hue = (i + (fx==='flow' ? time*20 : 0)) % 360;
+                     ctx.strokeStyle = `hsl(${hue}, 100%, 60%)`;
+                     if(path.config.isGlow) ctx.shadowColor = ctx.strokeStyle;
+                     ctx.stroke();
+                }
+            }
+
+            ctx.restore();
+
+            // Draw Pen Mechanics (Only if active)
+            if (path === state.currentPath && !path.isComplete) {
+                drawMechanics(ctx, ox, oy, path, getWiggle);
+            }
+        }
+
+        function drawMechanics(ctx, ox, oy, path, wiggleFn) {
+            const lastIdx = path.points.length - 1;
+            const pt = path.points[lastIdx];
+            const w = wiggleFn(lastIdx);
+            const penX = ox + pt.x + w.x;
+            const penY = oy + pt.y + w.y;
+
+            // Gear Center
+            const R = parseInt(path.config.R);
+            const r = parseInt(path.config.r);
+            const orbitR = R - r;
+            const gearCx = ox + orbitR * Math.cos(path.theta);
+            const gearCy = oy + orbitR * Math.sin(path.theta);
+
+            ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+            ctx.lineWidth = 1;
+            
+            // Outer Ring
+            ctx.beginPath();
+            ctx.arc(ox, oy, R, 0, Math.PI*2);
+            ctx.stroke();
+
+            // Inner Gear
+            ctx.beginPath();
+            ctx.arc(gearCx, gearCy, r, 0, Math.PI*2);
+            ctx.stroke();
+
+            // Arm
+            ctx.beginPath();
+            ctx.moveTo(gearCx, gearCy);
+            ctx.lineTo(penX, penY);
+            ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+            ctx.stroke();
+
+            // Pen Tip
+            ctx.beginPath();
+            ctx.fillStyle = 'white';
+            ctx.shadowColor = 'white';
+            ctx.shadowBlur = 10;
+            ctx.arc(penX, penY, 4, 0, Math.PI*2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
+
+        function drawReticle(ctx, x, y, t) {
+            ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
+            ctx.lineWidth = 1.5;
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(t * 0.5);
+            
+            // Circle parts
+            ctx.beginPath();
+            ctx.arc(0, 0, 15, 0, Math.PI * 0.5);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(0, 0, 15, Math.PI, Math.PI * 1.5);
+            ctx.stroke();
+
+            // Crosshair
+            ctx.rotate(-t); // Counter rotate center
+            ctx.fillStyle = 'rgba(56, 189, 248, 0.8)';
+            ctx.fillRect(-1, -1, 2, 2);
+            
+            ctx.restore();
+        }
+
+        function showToast(msg) {
+            toastEl.textContent = msg;
+            toastEl.classList.remove('opacity-0');
+            setTimeout(() => toastEl.classList.add('opacity-0'), 2000);
+        }
+
+        function hslToHex(h, s, l) {
+            l /= 100;
+            const a = s * Math.min(l, 1 - l) / 100;
+            const f = n => {
+                const k = (n + h / 30) % 12;
+                const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+                return Math.round(255 * color).toString(16).padStart(2, '0');
+            };
+            return `#${f(0)}${f(8)}${f(4)}`;
+        }
+
+        // --- Wiring Buttons ---
+        ui.btnDraw.addEventListener('click', startDrawing);
+        ui.btnStop.addEventListener('click', stopDrawing);
+        ui.btnClear.addEventListener('click', () => {
+            state.paths = [];
+            state.currentPath = null;
+            state.isDrawing = false;
+            stopDrawing();
+            showToast("Canvas Cleared");
+        });
+        ui.btnUndo.addEventListener('click', () => {
+            stopDrawing();
+            if(state.paths.length > 0) {
+                state.paths.pop();
+                showToast("Undo Successful");
+            }
+        });
+        ui.btnSave.addEventListener('click', () => {
+            const link = document.createElement('a');
+            link.download = `neonspiro-${Date.now()}.png`;
+            // Composite bg
+            const tCanvas = document.createElement('canvas');
+            tCanvas.width = canvas.width;
+            tCanvas.height = canvas.height;
+            const tCtx = tCanvas.getContext('2d');
+            tCtx.fillStyle = '#020617';
+            tCtx.fillRect(0,0, tCanvas.width, tCanvas.height);
+            tCtx.drawImage(canvas, 0, 0);
+            link.href = tCanvas.toDataURL();
+            link.click();
+        });
+        
+        ui.btnRandom.addEventListener('click', () => {
+            const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+            ui.R.value = rand(80, 250);
+            ui.r.value = rand(10, 140);
+            ui.d.value = rand(20, 150);
+            ui.color.value = hslToHex(rand(0,360), 100, 50);
+            ui.width.value = rand(1, 4);
+            ui.rainbow.checked = Math.random() > 0.7;
+            
+            // Random FX
+            const fxOpts = ['none', 'wiggle', 'pulse', 'flow', 'bounce'];
+            const chosenFx = fxOpts[rand(0,4)];
+            document.querySelector(`input[name="fx"][value="${chosenFx}"]`).checked = true;
+            
+            updateDisplays();
+            stopDrawing();
+            startDrawing();
+            showToast("Randomized!");
+        });
+
+        // Start Loop
+        animate();
+        updateDisplays();
+
+    </script>
+</body>
+</html>
+
+
