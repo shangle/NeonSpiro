@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeonSpiro | Private & Creative</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        body {
+            background-color: #020617; /* Slate 950 */
+            color: #e2e8f0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-x: hidden;
+        }
+        
+        /* Smooth scrolling */
+        html { scroll-behavior: smooth; }
+
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(56, 189, 248, 0.1);
+        }
+        
+        .text-glow {
+            text-shadow: 0 0 20px rgba(56, 189, 248, 0.5);
+        }
+
+        /* Hero Canvas acts as background */
+        #hero-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .content-layer {
+            position: relative;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col relative">
+
+    <!-- The Live Background -->
+    <canvas id="hero-canvas"></canvas>
+    
+    <!-- Gradient Overlay to ensure text readability -->
+    <div class="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-950/60 to-slate-950 z-0 pointer-events-none"></div>
+
+    <!-- Navigation -->
+    <nav class="p-6 flex justify-between items-center content-layer">
+        <div class="flex items-center gap-2 text-sky-400 font-bold text-xl tracking-wider">
+            <i class="ph-fill ph-aperture text-2xl animate-spin-slow"></i>
+            <span>NeonSpiro</span>
+        </div>
+        <div class="flex gap-4">
+            <a href="https://github.com/shangle/NeonSpiro" class="text-slate-400 hover:text-white transition-colors">
+                <i class="fab fa-github text-xl"></i>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <main class="content-layer flex-1 flex flex-col items-center justify-center text-center px-4 mt-8 md:mt-0 min-h-[80vh]">
+        
+        <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-sky-900/30 border border-sky-500/30 text-sky-300 text-sm font-medium mb-8 animate-pulse">
+            <span class="relative flex h-2 w-2">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2 w-2 bg-sky-500"></span>
+            </span>
+            v1.0 Live Now
+        </div>
+
+        <h1 class="text-6xl md:text-8xl font-black bg-clip-text text-transparent bg-gradient-to-r from-sky-400 via-indigo-400 to-fuchsia-400 mb-6 drop-shadow-[0_0_30px_rgba(56,189,248,0.4)] tracking-tight">
+            Hypnotic Art.<br>Zero Tracking.
+        </h1>
+
+        <p class="text-xl text-slate-300 max-w-2xl mb-10 leading-relaxed font-light">
+            A physics-based generative art tool. Create glistening, wiggling, neon geometries right in your browser. 
+            <span class="text-sky-400 font-medium">No login required.</span>
+        </p>
+
+        <div class="flex flex-col sm:flex-row gap-4 mb-20">
+            <a href="app.html" class="group relative px-10 py-5 bg-sky-600 hover:bg-sky-500 text-white font-bold text-lg rounded-full transition-all hover:shadow-[0_0_30px_rgba(14,165,233,0.6)] hover:-translate-y-1 flex items-center justify-center gap-3 overflow-hidden">
+                <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+                <i class="ph-fill ph-play-circle text-xl"></i>
+                <span>Launch App</span>
+            </a>
+            <a href="#showcase" class="px-10 py-5 glass-panel hover:bg-slate-800 text-white font-bold text-lg rounded-full transition-all hover:-translate-y-1">
+                See Examples
+            </a>
+        </div>
+    </main>
+
+    <!-- Feature Gallery / Showcase -->
+    <section id="showcase" class="content-layer py-24 bg-slate-950 relative border-t border-slate-800">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-5xl font-bold mb-4">Infinite Possibilities</h2>
+                <p class="text-slate-400 max-w-2xl mx-auto">The engine handles layering, blending, and real-time physics effects.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Card 1 -->
+                <div class="glass-panel rounded-2xl p-1 overflow-hidden hover:border-sky-500/50 transition-all group">
+                    <div class="relative h-64 bg-slate-900 rounded-xl overflow-hidden">
+                        <canvas id="canvas-1" class="w-full h-full"></canvas>
+                        <div class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 to-transparent pointer-events-none">
+                            <h3 class="font-bold text-sky-300">Self-Drawing Geometry</h3>
+                            <p class="text-xs text-slate-400">High-precision rendering</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="glass-panel rounded-2xl p-1 overflow-hidden hover:border-fuchsia-500/50 transition-all group">
+                    <div class="relative h-64 bg-slate-900 rounded-xl overflow-hidden">
+                        <canvas id="canvas-2" class="w-full h-full"></canvas>
+                        <div class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 to-transparent pointer-events-none">
+                            <h3 class="font-bold text-fuchsia-300">Neon Pulse</h3>
+                            <p class="text-xs text-slate-400">Active "Breathing" FX</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="glass-panel rounded-2xl p-1 overflow-hidden hover:border-amber-500/50 transition-all group">
+                    <div class="relative h-64 bg-slate-900 rounded-xl overflow-hidden">
+                        <canvas id="canvas-3" class="w-full h-full"></canvas>
+                        <div class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 to-transparent pointer-events-none">
+                            <h3 class="font-bold text-amber-300">Liquid Wiggle</h3>
+                            <p class="text-xs text-slate-400">Sine-wave interference</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works / Manifesto -->
+    <section class="content-layer py-24 relative overflow-hidden">
+        <!-- Decoration -->
+        <div class="absolute top-1/2 left-0 w-96 h-96 bg-sky-900/20 rounded-full blur-3xl -translate-y-1/2 -translate-x-1/2 pointer-events-none"></div>
+
+        <div class="max-w-4xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+            <div>
+                <h2 class="text-3xl md:text-4xl font-bold mb-6">Designed for Focus,<br>Not Engagement.</h2>
+                <div class="space-y-6">
+                    <div class="flex gap-4">
+                        <div class="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-sky-400 shrink-0">
+                            <i class="ph-fill ph-cookie-slash text-2xl"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-lg">No Cookies</h4>
+                            <p class="text-slate-400 text-sm">We don't need to know who you are. The code runs entirely on your device.</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-4">
+                        <div class="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-purple-400 shrink-0">
+                            <i class="ph-fill ph-file-code text-2xl"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-lg">Open Source</h4>
+                            <p class="text-slate-400 text-sm">Transparent code. View the source on GitHub and host it yourself.</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-4">
+                        <div class="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-emerald-400 shrink-0">
+                            <i class="ph-fill ph-download-simple text-2xl"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-lg">Instant Export</h4>
+                            <p class="text-slate-400 text-sm">Your art is yours. Save high-quality PNGs with a single click.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="glass-panel p-8 rounded-2xl relative">
+                <div class="absolute -top-4 -right-4 text-6xl text-slate-800"><i class="fas fa-quote-right"></i></div>
+                <p class="text-xl italic text-slate-300 mb-4">"The internet used to be about small, fun tools that did one thing well. NeonSpiro is a return to that ethos."</p>
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-sky-400 to-purple-600"></div>
+                    <div>
+                        <div class="font-bold text-sm">Maker's Note</div>
+                        <div class="text-xs text-slate-500">Dec 2025</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="content-layer p-8 text-center text-slate-600 border-t border-slate-800 bg-slate-950">
+        <div class="flex justify-center gap-6 mb-4">
+            <a href="#" class="hover:text-sky-400 transition-colors"><i class="fab fa-twitter"></i></a>
+            <a href="#" class="hover:text-white transition-colors"><i class="fab fa-github"></i></a>
+            <a href="#" class="hover:text-pink-400 transition-colors"><i class="fab fa-instagram"></i></a>
+        </div>
+        <p>&copy; <script>document.write(new Date().getFullYear())</script> NeonSpiro. Built with <i class="fas fa-heart text-rose-500"></i> and Math.</p>
+    </footer>
+
+    <!-- Script to power the background and galleries -->
+    <script>
+        // --- Shared Math Logic ---
+        function gcd(a, b) { return !b ? a : gcd(b, a % b); }
+        function lcm(a, b) { return (a * b) / gcd(a, b); }
+
+        function getSpiroPoint(R, r, d, theta) {
+            const diff = R - r;
+            const ratio = diff / r;
+            const x = diff * Math.cos(theta) + d * Math.cos(ratio * theta);
+            const y = diff * Math.sin(theta) - d * Math.sin(ratio * theta);
+            return { x, y };
+        }
+
+        class MiniSpiro {
+            constructor(canvasId, options = {}) {
+                this.canvas = document.getElementById(canvasId);
+                this.ctx = this.canvas.getContext('2d');
+                this.defaultOptions = { ...options }; // Store defaults
+                this.options = { ...options };
+                
+                this.points = [];
+                this.theta = 0;
+                this.isComplete = false;
+                this.isPaused = false;
+                this.time = 0;
+                
+                // If true, randomly changes params after every completion
+                this.autoRotate = options.autoRotate || false; 
+
+                new ResizeObserver(() => this.resize()).observe(this.canvas);
+                this.resize();
+            }
+
+            resize() {
+                const rect = this.canvas.getBoundingClientRect();
+                this.canvas.width = rect.width;
+                this.canvas.height = rect.height;
+                // If resizing during a draw, we just let it continue, 
+                // but the center point shifts, so we clear to avoid artifacts
+                this.points = [];
+                this.theta = 0;
+                this.isComplete = false;
+            }
+
+            reset() {
+                this.points = [];
+                this.theta = 0;
+                this.isComplete = false;
+                this.isPaused = false;
+                
+                if (this.autoRotate) {
+                    // Generate nice random parameters
+                    // Keep R around 60-100 (relative to canvas size approx)
+                    // Keep r around 20-80
+                    this.options.R = 50 + Math.floor(Math.random() * 50);
+                    this.options.r = 20 + Math.floor(Math.random() * 60);
+                    this.options.d = 30 + Math.floor(Math.random() * 50);
+                    
+                    // Occasionally vary speed
+                    this.options.speed = this.defaultOptions.speed * (0.8 + Math.random() * 0.4);
+                }
+            }
+
+            animate() {
+                this.time += 0.05;
+                const { ctx, canvas } = this;
+                const { width, height } = canvas;
+                const cx = width / 2;
+                const cy = height / 2;
+
+                // 1. Drawing Logic (Add points if not done/paused)
+                if (!this.isComplete && !this.isPaused) {
+                    const speed = this.options.speed || 1;
+                    const steps = 3; // Perform multiple math steps per frame for smoothness
+                    
+                    for(let k=0; k<steps; k++) {
+                        this.theta += 0.05 * speed;
+                        const { R, r, d } = this.options;
+                        const pt = getSpiroPoint(R, r, d, this.theta);
+                        this.points.push(pt);
+
+                        // Check completion
+                        // Simple heuristic: if theta is huge (safety) or if we returned to start
+                        // Checking return-to-start is expensive every frame, so we use max loop count for demo
+                        // Or we use the real LCM math
+                        
+                        // Hard limit for demo loop ease
+                        if (this.points.length > 2000 || this.theta > 60 * Math.PI) {
+                            this.isComplete = true;
+                            // Pause then reset
+                            this.isPaused = true;
+                            setTimeout(() => this.reset(), 3000); // 3s pause to admire
+                            break;
+                        }
+                    }
+                }
+
+                // 2. Render Logic
+                ctx.clearRect(0, 0, width, height);
+                ctx.beginPath();
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                
+                // Pulse Effect
+                let lw = this.options.width;
+                if (this.options.isPulse) {
+                    lw += Math.sin(this.time * 2) * 2;
+                    ctx.globalAlpha = 0.6 + Math.sin(this.time * 2) * 0.4;
+                } else {
+                    ctx.globalAlpha = 1;
+                }
+                ctx.lineWidth = Math.max(0.5, lw);
+
+                // Style
+                ctx.strokeStyle = this.options.color;
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = this.options.color;
+
+                // Draw Path
+                if (this.points.length > 0) {
+                    const getOffset = (idx) => {
+                        if (!this.options.isWiggle) return {x:0, y:0};
+                        const int = 5;
+                        const off = Math.sin((idx * 0.1) - (this.time * 3)) * int;
+                        return { 
+                            x: Math.cos(this.time + idx) * off, 
+                            y: Math.sin(this.time + idx) * off 
+                        };
+                    };
+
+                    const startOff = getOffset(0);
+                    ctx.moveTo(cx + this.points[0].x + startOff.x, cy + this.points[0].y + startOff.y);
+
+                    // To optimize rendering for the hero background which gets long
+                    // we can skip points, but for smooth curves we want most of them.
+                    const step = 1; 
+
+                    for(let i=1; i<this.points.length; i+=step) {
+                        const off = getOffset(i);
+                        
+                        if (this.options.isRainbow) {
+                            ctx.strokeStyle = `hsl(${(i + this.time*10)%360}, 80%, 60%)`;
+                            ctx.shadowColor = ctx.strokeStyle;
+                            ctx.beginPath();
+                            const prevOff = getOffset(i-1);
+                            ctx.moveTo(cx + this.points[i-1].x + prevOff.x, cy + this.points[i-1].y + prevOff.y);
+                            ctx.lineTo(cx + this.points[i].x + off.x, cy + this.points[i].y + off.y);
+                            ctx.stroke();
+                        } else {
+                            ctx.lineTo(cx + this.points[i].x + off.x, cy + this.points[i].y + off.y);
+                        }
+                    }
+                    if(!this.options.isRainbow) ctx.stroke();
+                    
+                    // Draw "Pen" Head (Glowing Dot)
+                    if (!this.isComplete && !this.isPaused) {
+                        const lastPt = this.points[this.points.length-1];
+                        const lastOff = getOffset(this.points.length-1);
+                        ctx.beginPath();
+                        ctx.fillStyle = '#fff';
+                        ctx.arc(cx + lastPt.x + lastOff.x, cy + lastPt.y + lastOff.y, lw + 2, 0, Math.PI*2);
+                        ctx.fill();
+                    }
+                }
+            }
+        }
+
+        // --- Init Instances ---
+
+        const instances = [];
+
+        // 1. Hero Background (Large, Wiggly, Rainbow)
+        instances.push(new MiniSpiro('hero-canvas', {
+            R: 300, r: 202, d: 150, 
+            color: '#38bdf8',
+            width: 2,
+            speed: 1.5,
+            isWiggle: true,
+            isRainbow: true,
+            autoRotate: true // Changing background
+        }));
+
+        // 2. Gallery 1: Classic (Blue, Auto-Changing Spirals)
+        instances.push(new MiniSpiro('canvas-1', {
+            R: 80, r: 30, d: 40,
+            color: '#38bdf8',
+            width: 2,
+            speed: 2,
+            isWiggle: false,
+            autoRotate: true
+        }));
+
+        // 3. Gallery 2: Pulse (Pink, Breathing, Auto-Changing)
+        instances.push(new MiniSpiro('canvas-2', {
+            R: 90, r: 70, d: 60,
+            color: '#d946ef', // Fuchsia
+            width: 3,
+            speed: 2,
+            isPulse: true,
+            autoRotate: true
+        }));
+
+        // 4. Gallery 3: Wiggle (Gold, Liquid, Auto-Changing)
+        instances.push(new MiniSpiro('canvas-3', {
+            R: 100, r: 20, d: 80,
+            color: '#f59e0b', // Amber
+            width: 2,
+            speed: 2,
+            isWiggle: true,
+            autoRotate: true
+        }));
+
+        // Global Loop
+        function loop() {
+            requestAnimationFrame(loop);
+            instances.forEach(i => i.animate());
+        }
+        loop();
+
+    </script>
+</body>
+</html>
+
+
